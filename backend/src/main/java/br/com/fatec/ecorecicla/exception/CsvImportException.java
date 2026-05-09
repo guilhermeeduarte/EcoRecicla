@@ -1,0 +1,11 @@
+package br.com.fatec.ecorecicla.exception;
+
+public class CsvImportException extends RuntimeException {
+    public CsvImportException(String message) {
+        super(message);
+    }
+
+    public CsvImportException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
