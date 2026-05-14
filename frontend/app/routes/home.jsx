@@ -16,6 +16,21 @@ import React, { useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/residuos";
 
+// --- Toast System ---
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`toast toast--${type}`}>
+      <span>{message}</span>
+      <button onClick={onClose} className="toast-close">×</button>
+    </div>
+  );
+};
+
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedWaste, setGeneratedWaste] = useState("");
@@ -36,16 +51,37 @@ export default function Home() {
   const [sortField, setSortField] = useState("");
   const [sortDir, setSortDir] = useState("asc");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [csvFile, setCsvFile] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = "info") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  const showLoadingToast = (promise, loadingMsg, successMsg, errorMsg) => {
+    const toastId = Date.now();
+    setToasts((prev) => [...prev, { id: toastId, message: loadingMsg, type: "loading" }]);
+    promise
+      .then((result) => {
+        setToasts((prev) => prev.filter((t) => t.id !== toastId));
+        showToast(successMsg, "success");
+        return result;
+      })
+      .catch((error) => {
+        setToasts((prev) => prev.filter((t) => t.id !== toastId));
+        showToast(errorMsg || error.message, "error");
+      });
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
 
   const generated = Number(generatedWaste);
   const recycled = Number(recycledWaste);
-
-  const recyclingRate =
-    generated > 0 ? ((recycled / generated) * 100).toFixed(1) : "0.0";
-
+  const recyclingRate = generated > 0 ? ((recycled / generated) * 100).toFixed(1) : "0.0";
   const isAboveAverage = Number(recyclingRate) >= 25;
   const metaPercent = 25;
 
@@ -57,14 +93,13 @@ export default function Home() {
 
   const loadResiduos = async () => {
     setLoading(true);
-    setError("");
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Nao foi possivel carregar os residuos");
+      if (!response.ok) throw new Error("Não foi possível carregar os resíduos");
       const data = await response.json();
       setResiduos(data);
     } catch (err) {
-      setError(err.message || "Erro ao carregar registros");
+      showToast(err.message || "Erro ao carregar registros", "error");
     } finally {
       setLoading(false);
     }
@@ -74,7 +109,16 @@ export default function Home() {
     loadResiduos();
   }, []);
 
-  // anos disponiveis para filtro
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen || deleteModalOpen) {
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.classList.remove("modal-open");
+    }
+    return () => document.body.classList.remove("modal-open");
+  }, [isModalOpen, deleteModalOpen]);
+
   const anos = useMemo(
     () => [...new Set(residuos.map((item) => item.ano))].sort((a, b) => b - a),
     [residuos]
@@ -189,7 +233,6 @@ export default function Home() {
     const reciclado =
       (Number(item.quantidadeGerada || 0) * Number(item.taxaReciclagem || 0)) / 100;
     setRecycledWaste(String(reciclado.toFixed(2)));
-    setError("");
     setIsModalOpen(true);
   };
 
@@ -200,7 +243,6 @@ export default function Home() {
     setAno("");
     setGeneratedWaste("");
     setRecycledWaste("");
-    setError("");
     setIsModalOpen(true);
   };
 
@@ -214,7 +256,6 @@ export default function Home() {
     setDeleteTarget(null);
     setIsModalOpen(false);
     setDeleteModalOpen(false);
-    setError("");
   };
 
   const handleDelete = (item) => {
@@ -224,10 +265,9 @@ export default function Home() {
 
   const handleSave = async (event) => {
     event.preventDefault();
-    setError("");
 
     if (!municipio || !estado || !ano || generated <= 0 || recycled < 0) {
-      setError("Preencha todos os campos corretamente antes de salvar.");
+      showToast("Preencha todos os campos corretamente antes de salvar.", "error");
       return;
     }
 
@@ -239,46 +279,53 @@ export default function Home() {
       taxaReciclagem: Number(recyclingRate),
     };
 
-    try {
-      const url = editingData ? `${API_URL}/${editingData.id}` : API_URL;
-      const method = editingData ? "PUT" : "POST";
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
+    const url = editingData ? `${API_URL}/${editingData.id}` : API_URL;
+    const method = editingData ? "PUT" : "POST";
+    const requestPromise = fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(async (response) => {
       if (!response.ok) {
         const details = await response.json().catch(() => null);
         throw new Error(details?.message || "Falha ao salvar o registro.");
       }
-
       resetForm();
       loadResiduos();
-    } catch (err) {
-      setError(err.message || "Erro ao salvar registro.");
-    }
+      return response;
+    });
+
+    showLoadingToast(
+      requestPromise,
+      "Salvando registro...",
+      "Registro salvo com sucesso!",
+      "Erro ao salvar registro."
+    );
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!deleteTarget?.id) return;
-    try {
-      const response = await fetch(`${API_URL}/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
+    const requestPromise = fetch(`${API_URL}/${deleteTarget.id}`, {
+      method: "DELETE",
+    }).then(async (response) => {
       if (!response.ok) throw new Error("Falha ao excluir o registro.");
       resetForm();
       loadResiduos();
-    } catch (err) {
-      setError(err.message || "Erro ao excluir registro.");
-    }
+      return response;
+    });
+
+    showLoadingToast(
+      requestPromise,
+      "Excluindo registro...",
+      "Registro excluído com sucesso!",
+      "Erro ao excluir registro."
+    );
   };
 
   const handleFileSelection = (event) => {
-    setError("");
     const file = event.target.files?.[0] || null;
     if (file && !file.name.toLowerCase().endsWith(".csv")) {
-      setError("Selecione um arquivo CSV valido.");
+      showToast("Selecione um arquivo CSV válido.", "error");
       setCsvFile(null);
       return;
     }
@@ -287,18 +334,15 @@ export default function Home() {
 
   const handleImportCsv = async () => {
     if (!csvFile) {
-      setError("Selecione um arquivo CSV antes de importar.");
+      showToast("Selecione um arquivo CSV antes de importar.", "error");
       return;
     }
-    setLoading(true);
-    setError("");
-    try {
-      const formData = new FormData();
-      formData.append("arquivo", csvFile);
-      const response = await fetch(`${API_URL}/importar-csv`, {
-        method: "POST",
-        body: formData,
-      });
+    const formData = new FormData();
+    formData.append("arquivo", csvFile);
+    const requestPromise = fetch(`${API_URL}/importar-csv`, {
+      method: "POST",
+      body: formData,
+    }).then(async (response) => {
       if (!response.ok) {
         const details = await response.json().catch(() => null);
         throw new Error(details?.message || "Falha ao importar CSV.");
@@ -306,12 +350,15 @@ export default function Home() {
       const imported = await response.json();
       setResiduos(imported);
       setCsvFile(null);
-      setError(`Importacao concluida: ${imported.length} registros importados.`);
-    } catch (err) {
-      setError(err.message || "Erro ao importar CSV.");
-    } finally {
-      setLoading(false);
-    }
+      return imported;
+    });
+
+    showLoadingToast(
+      requestPromise,
+      "Importando CSV...",
+      "CSV importado com sucesso!",
+      "Erro ao importar CSV."
+    );
   };
 
   const SortIcon = ({ field }) => (
@@ -324,6 +371,17 @@ export default function Home() {
   return (
     <div className="app">
       <div className="phone-layout">
+        {/* Toast Container */}
+        <div className="toast-container">
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
+        </div>
 
         {/* NAVBAR */}
         <nav className="navbar">
@@ -337,12 +395,12 @@ export default function Home() {
           <div className="hero-content">
             <span className="hero-badge">
               <Leaf size={18} />
-              <h4>Gestao de Residuos</h4>
+              <h4>Gestão de Resíduos</h4>
             </span>
             <div className="hero-text">
               <h1>ECORECICLA</h1>
               <p>
-                Plataforma para monitoramento de residuos reciclaveis e
+                Plataforma para monitoramento de resíduos recicláveis e
                 acompanhamento de metas ambientais.
               </p>
             </div>
@@ -351,14 +409,13 @@ export default function Home() {
         </section>
 
         <div className="container">
-          {error && <div className="error-banner">{error}</div>}
           {loading && <div className="loading-banner">Carregando dados...</div>}
 
           {/* CARDS */}
           <div className="cards-grid">
             <div className="dashboard-card">
               <div className="card-header">
-                <h3>Municipios registrados</h3>
+                <h3>Municípios registrados</h3>
                 <Building2 size={34} color="#1593ff" />
               </div>
               <div className="card-value" style={{ color: "#1593ff" }}>
@@ -369,7 +426,7 @@ export default function Home() {
 
             <div className="dashboard-card">
               <div className="card-header">
-                <h3>Residuos gerados (t)</h3>
+                <h3>Resíduos gerados (t)</h3>
                 <Trash2 size={34} color="#f58b00" />
               </div>
               <div className="card-value" style={{ color: "#f58b00" }}>
@@ -391,7 +448,7 @@ export default function Home() {
 
             <div className="dashboard-card">
               <div className="card-header">
-                <h3>Abaixo da media</h3>
+                <h3>Abaixo da média</h3>
                 <TriangleAlert size={34} color="#d8cf00" />
               </div>
               <div className="card-value" style={{ color: "#d8cf00" }}>
@@ -401,14 +458,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* TAXA MEDIA */}
+          {/* TAXA MÉDIA */}
           <section className="progress-card">
             <div className="progress-circle-content">
               <div className="progress-circle">
                 <span>{averageTax}%</span>
               </div>
               <div className="progress-content">
-                <h2>Taxa media de reciclagem</h2>
+                <h2>Taxa média de reciclagem</h2>
                 <p>Meta nacional: {metaPercent}%</p>
               </div>
             </div>
@@ -420,13 +477,11 @@ export default function Home() {
 
           {/* FILTROS */}
           <section className="filters-container">
-
-            {/* linha 1: busca + toggle painel */}
             <div className="filters-row filters-row--top">
               <div className="search-box">
                 <input
                   type="text"
-                  placeholder="Buscar municipio..."
+                  placeholder="Buscar município..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -473,11 +528,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* linha 2: painel de filtros avancados */}
             {showFilters && (
               <div className="filters-panel">
-
-                {/* Estado */}
                 <div className="filter-item">
                   <label className="filter-label">Estado</label>
                   <select
@@ -491,7 +543,6 @@ export default function Home() {
                   </select>
                 </div>
 
-                {/* Ano */}
                 <div className="filter-item">
                   <label className="filter-label">Ano</label>
                   <select
@@ -505,9 +556,8 @@ export default function Home() {
                   </select>
                 </div>
 
-                {/* Taxa minima */}
                 <div className="filter-item">
-                  <label className="filter-label">Taxa min (%)</label>
+                  <label className="filter-label">Taxa mín (%)</label>
                   <input
                     type="number"
                     className="filter-input-num"
@@ -519,9 +569,8 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Taxa maxima */}
                 <div className="filter-item">
-                  <label className="filter-label">Taxa max (%)</label>
+                  <label className="filter-label">Taxa máx (%)</label>
                   <input
                     type="number"
                     className="filter-input-num"
@@ -533,7 +582,6 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Abaixo da meta */}
                 <div className="filter-item filter-item--toggle">
                   <label className="filter-label">Abaixo da meta</label>
                   <button
@@ -545,16 +593,13 @@ export default function Home() {
                     {onlyBelowMeta ? "Ativo" : "Inativo"}
                   </button>
                 </div>
-
               </div>
             )}
 
-            {/* contador de resultados */}
             <div className="results-count">
               {filteredResiduos.length} resultado{filteredResiduos.length !== 1 ? "s" : ""}
               {hasActiveFilters && ` (de ${residuos.length} total)`}
             </div>
-
           </section>
 
           {/* TABELA */}
@@ -563,7 +608,7 @@ export default function Home() {
               <thead>
                 <tr>
                   <th onClick={() => handleSort("municipio")} className="th-sortable">
-                    MUNICIPIO <SortIcon field="municipio" />
+                    MUNICÍPIO <SortIcon field="municipio" />
                   </th>
                   <th onClick={() => handleSort("estado")} className="th-sortable">
                     ESTADO <SortIcon field="estado" />
@@ -579,7 +624,7 @@ export default function Home() {
                     TAXA <SortIcon field="taxaReciclagem" />
                   </th>
                   <th>STATUS</th>
-                  <th>ACOES</th>
+                  <th>AÇÕES</th>
                 </tr>
               </thead>
               <tbody>
@@ -642,7 +687,7 @@ export default function Home() {
               <div className="footer-text">
                 <h3>ECORECICLA</h3>
                 <p>
-                  Plataforma de monitoramento de residuos reciclaveis e
+                  Plataforma de monitoramento de resíduos recicláveis e
                   sustentabilidade ambiental.
                 </p>
               </div>
@@ -665,7 +710,7 @@ export default function Home() {
               </div>
               <form className="modal-form" onSubmit={handleSave}>
                 <div className="form-group">
-                  <label>Municipio</label>
+                  <label>Município</label>
                   <input
                     type="text"
                     value={municipio}
@@ -686,7 +731,7 @@ export default function Home() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Ano de referencia</label>
+                  <label>Ano de referência</label>
                   <input
                     type="number"
                     placeholder="Ex: 2023"
@@ -695,7 +740,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Residuos gerados (t)</label>
+                  <label>Resíduos gerados (t)</label>
                   <input
                     type="number"
                     placeholder="0.0"
@@ -704,7 +749,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Residuos reciclados (t)</label>
+                  <label>Resíduos reciclados (t)</label>
                   <input
                     type="number"
                     placeholder="0.0"
@@ -716,16 +761,15 @@ export default function Home() {
                   <h3>Taxa de reciclagem calculada</h3>
                   <div className="rate-value">{recyclingRate}%</div>
                   <span className={isAboveAverage ? "rate-status success" : "rate-status warning"}>
-                    {isAboveAverage ? "Acima da media nacional" : "Abaixo da media nacional"}
+                    {isAboveAverage ? "Acima da média nacional" : "Abaixo da média nacional"}
                   </span>
                 </div>
-                {error && <div className="form-error">{error}</div>}
                 <div className="modal-actions">
                   <button type="button" className="cancel-button" onClick={resetForm}>
                     Cancelar
                   </button>
                   <button type="submit" className="save-button">
-                    {editingData ? "Salvar Alteracoes" : "Cadastrar"}
+                    {editingData ? "Salvar Alterações" : "Cadastrar"}
                   </button>
                 </div>
               </form>
@@ -741,7 +785,7 @@ export default function Home() {
               <h2>Excluir registro?</h2>
               <p>
                 {deleteTarget?.municipio} / {deleteTarget?.estado} ({deleteTarget?.ano})<br />
-                Essa acao nao podera ser desfeita.
+                Essa ação não poderá ser desfeita.
               </p>
               <div className="delete-actions">
                 <button
