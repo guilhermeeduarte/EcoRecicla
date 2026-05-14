@@ -10,7 +10,7 @@
 
   --color-bg: #101010;
   --color-surface: #f4f4f4;
-  --color-card: #ffffff;
+  --color-card: #f3f5f3;
 
   --color-green-primary: #2e8b00;
   --color-green-dark: #0d3b00;
@@ -152,12 +152,13 @@ img {
 .app {
   min-height: 100vh;
   background: var(--color-border);
+  
 }
 
 .container {
   width: 100%;
-  max-width: 430px;
   margin: 0 auto;
+  padding: 10px;
 }
 
 .card {
@@ -272,6 +273,61 @@ img {
 HOME   ═══════════════════════════════════════════════════════ */
 
 
+.progress-card {
+  width: 100%;
+  background:var(--color-green-dark);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.progress-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 8px solid #7ad600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-left: 12px;
+}
+.progress-content{
+  margin-left: 28px;
+  align-items: center;
+  justify-content: center;
+}
+.progress-circle-content{
+    display: flex;
+
+}
+
+.progress-content h2 {
+  color: white;
+  font-size: 1.1rem;
+}
+
+.progress-content p {
+  color: #d4d4d4;
+  margin-top: 4px;
+}
+.progress-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-right: 20px;
+  
+}
+
+.progress-status span {
+  color: rgb(255, 208, 0);
+  font-weight: 700;
+}
+
 .progress-status small {
   color: #d8d8d8;
 }
@@ -280,6 +336,7 @@ HOME   ════════════════════════�
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  padding: 0px;
 }
 
 .search-box {
@@ -341,4 +398,51 @@ select,
   color: #444;
   padding-bottom: 14px;
   text-align: left;
+}
+
+/*cards*/
+
+.cards-grid{
+  display: flex;
+  gap:20px;
+  margin: 5px;
+  padding: 5px;
+}
+
+.dashboard-card {
+  background: var(--color-card);
+  border-radius: 24px;
+  width: 25%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #4b4b4b;
+  
+}
+
+.card-header h3 {
+  font-size: 1.0rem;
+}
+
+.card-value {
+  font-size: 2.6rem;
+  font-weight: 800;
+}
+
+.dashboard-card p {
+  color: #9e9e9e;
+}
+
+.card-line {
+  width: 120px;
+  height: 4px;
+  border-radius: 10px;
 }
