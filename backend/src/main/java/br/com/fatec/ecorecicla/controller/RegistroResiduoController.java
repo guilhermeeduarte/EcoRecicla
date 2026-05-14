@@ -1,6 +1,7 @@
 package br.com.fatec.ecorecicla.controller;
 
 import br.com.fatec.ecorecicla.model.RegistroResiduo;
+import br.com.fatec.ecorecicla.service.OpenDataImportService;
 import br.com.fatec.ecorecicla.service.RegistroResiduoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 public class RegistroResiduoController {
 
     private final RegistroResiduoService service;
+    private final OpenDataImportService openDataImportService;
 
     @GetMapping
     public ResponseEntity<List<RegistroResiduo>> listarTodos() {
@@ -81,6 +83,14 @@ public class RegistroResiduoController {
     public ResponseEntity<List<RegistroResiduo>> importarCsv(
             @RequestParam("arquivo") MultipartFile arquivo) {
         List<RegistroResiduo> importados = service.importarCsv(arquivo);
+        return ResponseEntity.ok(importados);
+    }
+
+    @PostMapping("/importar-dados-abertos")
+    public ResponseEntity<List<RegistroResiduo>> importarDadosAbertos(
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String url) {
+        List<RegistroResiduo> importados = openDataImportService.importarDadosAbertos(source, url);
         return ResponseEntity.ok(importados);
     }
 }
