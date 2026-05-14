@@ -26,6 +26,46 @@ export default function Home() {
 
   const isAboveAverage = Number(recyclingRate) >= 25;
 
+  const [editingData, setEditingData] = useState(null);
+  const [municipio, setMunicipio] = useState("");
+  const [estado, setEstado] = useState("");
+  const [ano, setAno] = useState("");
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+
+  const handleEdit = (item) => {
+
+    setEditingData(item);
+
+    setMunicipio(item.municipio);
+    setEstado(item.estado);
+    setAno(item.ano);
+
+    setGeneratedWaste(item.gerado);
+    setRecycledWaste(item.reciclado);
+
+    setIsModalOpen(true);
+  };
+
+  const resetForm = () => {
+
+    setMunicipio("");
+    setEstado("");
+    setAno("");
+
+    setGeneratedWaste("");
+    setRecycledWaste("");
+
+    setEditingData(null);
+
+    setIsModalOpen(false);
+  };
+
+  const handleDelete = () => {
+    setDeleteModalOpen(true);
+  };
+
   return (
     <div className="app">
       <div className="phone-layout">
@@ -186,7 +226,7 @@ export default function Home() {
 
             <button
               className="new-button"
-              onClick={() => setIsModalOpen(true)}
+              onClick={resetForm}
             >
               Novo +
             </button>
@@ -236,11 +276,24 @@ export default function Home() {
 
                       <div className="actions">
 
-                        <button className="edit-btn">
+                        <button
+                          className="edit-btn"
+                          onClick={() =>
+                            handleEdit({
+                              municipio: "Campinas",
+                              estado: "SP",
+                              ano: "2023",
+                              gerado: "3200",
+                              reciclado: "896",
+                            })
+                          }
+                        >
                           <Pencil size={14} />
                         </button>
 
-                        <button className="delete-btn">
+                        <button className="delete-btn"
+                          onClick={handleDelete}
+                        >
                           <Trash size={14} />
                         </button>
 
@@ -270,12 +323,17 @@ export default function Home() {
 
                 <div className="modal-header">
 
-                  <h2>Novo Registro</h2>
+                  <h2>
+                    {
+                      editingData
+                        ? "Editar Registro"
+                        : "Novo Registro"
+                    }
+                  </h2>
 
                   <button
                     className="close-modal"
-                    onClick={() => setIsModalOpen(false)}
-                  >
+                    onClick={resetForm}                  >
                     ✕
                   </button>
 
@@ -291,7 +349,8 @@ export default function Home() {
 
                     <input
                       type="text"
-                      placeholder="Digite o município"
+                      value={municipio}
+                      onChange={(e) => setMunicipio(e.target.value)}
                     />
 
                   </div>
@@ -300,7 +359,10 @@ export default function Home() {
 
                     <label>Estado</label>
 
-                    <select>
+                    <select
+                      value={estado}
+                      onChange={(e) => setEstado(e.target.value)}
+                    >
                       <option>Selecione</option>
                       <option>SP</option>
                       <option>RJ</option>
@@ -315,7 +377,8 @@ export default function Home() {
 
                     <input
                       type="number"
-                      placeholder="2024"
+                      value={ano}
+                      onChange={(e) => setAno(e.target.value)}
                     />
 
                   </div>
@@ -385,7 +448,11 @@ export default function Home() {
                       type="submit"
                       className="save-button"
                     >
-                      Salvar
+                      {
+                        editingData
+                          ? "Salvar Alterações"
+                          : "Cadastrar"
+                      }
                     </button>
 
                   </div>
@@ -398,7 +465,54 @@ export default function Home() {
 
           )
         }
+        {/* Messagem do delete*/}
 
+        {
+          deleteModalOpen && (
+
+            <div className="modal-overlay">
+
+              <div className="delete-modal">
+
+                <div className="delete-icon">
+                  ⚠️
+                </div>
+
+                <h2>Excluir registro?</h2>
+
+                <p>
+                  Essa ação não poderá ser desfeita.
+                </p>
+
+                <div className="delete-actions">
+
+                  <button
+                    className="cancel-delete"
+                    onClick={() => setDeleteModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    className="confirm-delete"
+                    onClick={() => {
+
+                      console.log("Registro excluído");
+
+                      setDeleteModalOpen(false);
+                    }}
+                  >
+                    Excluir
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )
+        }
 
       </div>
     </div>
