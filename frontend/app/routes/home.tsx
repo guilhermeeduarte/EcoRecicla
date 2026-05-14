@@ -7,6 +7,7 @@ import {
   Pencil,
   Trash,
   House,
+  Leaf,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -83,7 +84,8 @@ export default function Home() {
           <div className="hero-content">
 
             <span className="hero-badge">
-              Gestão de Resíduos
+              <Leaf size={18} />
+               <h4>Gestão de Resíduos</h4> 
             </span>
 
             <div className="hero-text">
@@ -109,8 +111,10 @@ export default function Home() {
             <div className="dashboard-card">
               <div className="card-header">
                 <h3>Municípios registrados</h3>
-              </div>
+                    <Building2 size={34} color="#1593ff" />
 
+              </div>
+      
               <div
                 className="card-value"
                 style={{ color: "#1593ff" }}
@@ -127,6 +131,8 @@ export default function Home() {
             <div className="dashboard-card">
               <div className="card-header">
                 <h3>Resíduos gerados (mil t)</h3>
+                    <Trash2 size={34} color="#f58b00" />
+
               </div>
 
               <div
@@ -145,6 +151,8 @@ export default function Home() {
             <div className="dashboard-card">
               <div className="card-header">
                 <h3>Total reciclado(mil t)</h3>
+                    <Recycle size={34} color="#7ad600" />
+
               </div>
               <div
                 className="card-value"
@@ -162,6 +170,8 @@ export default function Home() {
             <div className="dashboard-card">
               <div className="card-header">
                 <h3>Abaixo da média (mil t)</h3>
+                    <TriangleAlert size={34} color="#d8cf00" />
+
               </div>
 
               <div
@@ -309,7 +319,48 @@ export default function Home() {
             </table>
 
           </div>
+          
         </div>
+
+        {/* FOOTER */}
+
+          <footer className="footer">
+
+            <div className="footer-content">
+
+              <div className="footer-brand">
+
+                <div className="footer-logo">
+
+                  <Leaf size={18} />
+
+                </div>
+
+                <div className="footer-text">
+
+                  <h3>ECORECICLA</h3>
+
+                  <p>
+                    Plataforma de monitoramento de resíduos recicláveis
+                    e sustentabilidade ambiental.
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div className="footer-bottom">
+
+                <span>
+                  © 2026 Ecorecicla — Todos os direitos reservados
+                </span>
+
+              </div>
+
+            </div>
+
+          </footer>
+
         {/* MODAL */}
 
         {
