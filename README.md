@@ -55,15 +55,6 @@ A API segue o padrão RESTful, retornando os status HTTP adequados (`200 OK`, `2
 
 ---
 
-## 🧠 Justificativa Técnica: Uso do `Optional`
-
-Na camada `Service`, utilizamos a interface `Optional` do Java ao realizar operações de busca no `Repository`. 
-
-**Por que usamos?**
-O uso do `Optional` encapsula o retorno de métodos que podem não encontrar resultados. Em vez de retornar `null`, o que poderia causar um `NullPointerException`, retornamos um objeto que "avisa" ao sistema se o valor está presente ou não. Isso permite que o código trate a ausência do dado de forma elegante, lançando exceções que o Controller traduz para o status **404 Not Found**, garantindo maior robustez e clareza no tratamento de erros da aplicação.
-
----
-
 ## 📸 Prints de Funcionamento
 
 
