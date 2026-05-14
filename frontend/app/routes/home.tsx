@@ -8,9 +8,24 @@ import {
   Trash,
   House,
 } from "lucide-react";
-
+import React, { useState } from "react";
 
 export default function Home() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [generatedWaste, setGeneratedWaste] = useState("");
+  const [recycledWaste, setRecycledWaste] = useState("");
+
+  const generated = Number(generatedWaste);
+  const recycled = Number(recycledWaste);
+
+  const recyclingRate =
+    generated > 0
+      ? ((recycled / generated) * 100).toFixed(1)
+      : 0;
+
+  const isAboveAverage = Number(recyclingRate) >= 25;
+
   return (
     <div className="app">
       <div className="phone-layout">
@@ -144,100 +159,245 @@ export default function Home() {
             </div>
 
           </section>
-        
 
-        {/* FILTROS */}
-        <section className="filters-container">
 
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Buscar município"
-            />
+          {/* FILTROS */}
+          <section className="filters-container">
 
-            <Search size={18} />
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Buscar município"
+              />
+
+              <Search size={18} />
+            </div>
+
+            <select>
+              <option>Estado</option>
+              <option>SP</option>
+
+            </select>
+
+            <button className="filter-button">
+              <TriangleAlert size={16} />
+              Abaixo da média
+            </button>
+
+            <button
+              className="new-button"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Novo +
+            </button>
+
+          </section>
+
+
+          {/* TABELA */}
+          <div className="table-container">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>MUNICÍPIO</th>
+                  <th>ESTADO</th>
+                  <th>ANO</th>
+                  <th>GERADO (t)</th>
+                  <th>RECICLADO</th>
+                  <th>TAXA</th>
+                  <th>STATUS</th>
+                  <th>AÇÕES</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {[1, 2, 3].map((item) => (
+                  <tr key={item}>
+
+                    <td>Campinas</td>
+                    <td>SP</td>
+                    <td>2023</td>
+                    <td>3.200</td>
+
+                    <td className="green-text">
+                      896
+                    </td>
+
+                    <td>28.0%</td>
+
+                    <td className="status-text">
+                      Atingido
+                    </td>
+
+                    <td>
+
+                      <div className="actions">
+
+                        <button className="edit-btn">
+                          <Pencil size={14} />
+                        </button>
+
+                        <button className="delete-btn">
+                          <Trash size={14} />
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+                ))}
+
+              </tbody>
+
+            </table>
+
           </div>
+        </div>
+        {/* MODAL */}
 
-          <select>
-            <option>Estado</option>
-            <option>SP</option>
+        {
+          isModalOpen && (
 
-          </select>
+            <div className="modal-overlay">
 
-          <button className="filter-button">
-            <TriangleAlert size={16} />
-            Abaixo da média
-          </button>
+              <div className="modal-container">
 
-          <button className="new-button">
-            Novo +
-          </button>
+                {/* HEADER */}
 
-        </section>
-        {/* TABELA */}
-        <div className="table-container">
+                <div className="modal-header">
 
-          <table>
+                  <h2>Novo Registro</h2>
 
-            <thead>
-              <tr>
-                <th>MUNICÍPIO</th>
-                <th>ESTADO</th>
-                <th>ANO</th>
-                <th>GERADO (t)</th>
-                <th>RECICLADO</th>
-                <th>TAXA</th>
-                <th>STATUS</th>
-                <th>AÇÕES</th>
-              </tr>
-            </thead>
+                  <button
+                    className="close-modal"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    ✕
+                  </button>
 
-            <tbody>
+                </div>
 
-              {[1, 2, 3].map((item) => (
-                <tr key={item}>
+                {/* FORM */}
 
-                  <td>Campinas</td>
-                  <td>SP</td>
-                  <td>2023</td>
-                  <td>3.200</td>
+                <form className="modal-form">
 
-                  <td className="green-text">
-                    896
-                  </td>
+                  <div className="form-group">
 
-                  <td>28.0%</td>
+                    <label>Município</label>
 
-                  <td className="status-text">
-                    Atingido
-                  </td>
+                    <input
+                      type="text"
+                      placeholder="Digite o município"
+                    />
 
-                  <td>
+                  </div>
 
-                    <div className="actions">
+                  <div className="form-group">
 
-                      <button className="edit-btn">
-                        <Pencil size={14} />
-                      </button>
+                    <label>Estado</label>
 
-                      <button className="delete-btn">
-                        <Trash size={14} />
-                      </button>
+                    <select>
+                      <option>Selecione</option>
+                      <option>SP</option>
+                      <option>RJ</option>
+                      <option>MG</option>
+                    </select>
 
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>Ano de referência</label>
+
+                    <input
+                      type="number"
+                      placeholder="2024"
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>Resíduos gerados (t)</label>
+
+                    <input
+                      type="number"
+                      placeholder="0.0"
+                      value={generatedWaste}
+                      onChange={(e) => setGeneratedWaste(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>Resíduos reciclados (t)</label>
+
+                    <input
+                      type="number"
+                      placeholder="0.0"
+                      value={recycledWaste}
+                      onChange={(e) => setRecycledWaste(e.target.value)}
+                    />
+                  </div>
+
+                  {/*resultado da taxa*/}
+                  <div className="rate-preview">
+
+                    <h3>Taxa de reciclagem</h3>
+
+                    <div className="rate-value">
+                      {recyclingRate}%
                     </div>
 
-                  </td>
+                    <span
+                      className={
+                        isAboveAverage
+                          ? "rate-status success"
+                          : "rate-status warning"
+                      }
+                    >
+                      {
+                        isAboveAverage
+                          ? "Acima da média nacional"
+                          : "Abaixo da média nacional"
+                      }
+                    </span>
 
-                </tr>
-              ))}
+                  </div>
 
-            </tbody>
+                  {/* ACTIONS */}
 
-          </table>
+                  <div className="modal-actions">
 
-        </div>
-        </div>
+                    <button
+                      type="button"
+                      className="cancel-button"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      Cancelar
+                    </button>
 
+                    <button
+                      type="submit"
+                      className="save-button"
+                    >
+                      Salvar
+                    </button>
+
+                  </div>
+
+                </form>
+
+              </div>
+
+            </div>
+
+          )
+        }
 
 
       </div>
