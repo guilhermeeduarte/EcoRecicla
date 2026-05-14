@@ -127,16 +127,16 @@ export default function Home() {
           {/* TAXA */}
           <section className="progress-card">
 
-        <div className="progress-circle-content">
-            <div className="progress-circle">
-              <span>20.6%</span>
-            </div>
+            <div className="progress-circle-content">
+              <div className="progress-circle">
+                <span>20.6%</span>
+              </div>
 
-            <div className="progress-content">
-              <h2>Taxa média de reciclagem</h2>
-              <p>Meta nacional: 25%</p>
+              <div className="progress-content">
+                <h2>Taxa média de reciclagem</h2>
+                <p>Meta nacional: 25%</p>
+              </div>
             </div>
-          </div>
 
             <div className="progress-status">
               <span>Abaixo da meta</span>
@@ -144,7 +144,7 @@ export default function Home() {
             </div>
 
           </section>
-        </div>
+        
 
         {/* FILTROS */}
         <section className="filters-container">
@@ -159,7 +159,9 @@ export default function Home() {
           </div>
 
           <select>
-            <option>Todos</option>
+            <option>Estado</option>
+            <option>SP</option>
+
           </select>
 
           <button className="filter-button">
@@ -172,7 +174,69 @@ export default function Home() {
           </button>
 
         </section>
+        {/* TABELA */}
+        <div className="table-container">
 
+          <table>
+
+            <thead>
+              <tr>
+                <th>MUNICÍPIO</th>
+                <th>ESTADO</th>
+                <th>ANO</th>
+                <th>GERADO (t)</th>
+                <th>RECICLADO</th>
+                <th>TAXA</th>
+                <th>STATUS</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {[1, 2, 3].map((item) => (
+                <tr key={item}>
+
+                  <td>Campinas</td>
+                  <td>SP</td>
+                  <td>2023</td>
+                  <td>3.200</td>
+
+                  <td className="green-text">
+                    896
+                  </td>
+
+                  <td>28.0%</td>
+
+                  <td className="status-text">
+                    Atingido
+                  </td>
+
+                  <td>
+
+                    <div className="actions">
+
+                      <button className="edit-btn">
+                        <Pencil size={14} />
+                      </button>
+
+                      <button className="delete-btn">
+                        <Trash size={14} />
+                      </button>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+        </div>
 
 
 
